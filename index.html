@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Investment News Dashboard</title>
+  <style>
+    /* ============================================
+       COLOR SYSTEM — 60/30/10 Golden Ratio Rule
+       60% → Background (dominant)
+       30% → Surface/Cards (secondary)
+       10% → Accent (action, highlights)
+       ============================================ */
+
+    :root {
+      /* Shared */
+      --radius: 12px;
+      --radius-sm: 8px;
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --golden-ratio: 1.618;
+      --font-base: 15px;
+      --font-sm: calc(var(--font-base) / 1.2);
+      --font-lg: calc(var(--font-base) * 1.2);
+      --font-xl: calc(var(--font-base) * var(--golden-ratio));
+      --font-2xl: calc(var(--font-xl) * var(--golden-ratio));
+      --space-unit: 8px;
+      --space-xs: var(--space-unit);
+      --space-sm: calc(var(--space-unit) * 2);
+      --space-md: calc(var(--space-unit) * 3);
+      --space-lg: calc(var(--space-unit) * 5);
+      --space-xl: calc(var(--space-unit) * 8);
+    }
+
+    /* DARK THEME — Default */
+    [data-theme="dark"] {
+      --color-bg: #0B0F14;
+      --color-bg-subtle: #0F1419;
+      --color-surface: #161D27;
+      --color-surface-hover: #1C2530;
+      --color-surface-elevated: #212B38;
+      --color-border: #2A3544;
+      --color-border-subtle: #1E2834;
+      --color-text-primary: #E8ECF1;
+      --color-text-secondary: #8B95A5;
+      --color-text-muted: #5C6878;
+      --color-accent: #3B82F6;
+      --color-accent-hover: #2563EB;
+      --color-accent-subtle: rgba(59, 130, 246, 0.12);
+      --color-accent-text: #93C5FD;
+      --color-success: #22C55E;
+      --color-warning: #F59E0B;
+      --color-danger: #EF4444;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    /* LIGHT THEME */
+    [data-theme="light"] {
+      --color-bg: #F3F4F6;
+      --color-bg-subtle: #F8F9FA;
+      --color-surface: #FFFFFF;
+      --color-surface-hover: #F0F2F5;
+      --color-surface-elevated: #FFFFFF;
+      --color-border: #E2E5EA;
+      --color-border-subtle: #EDF0F3;
+      --color-text-primary: #111827;
+      --color-text-secondary: #5F6B7A;
+      --color-text-muted: #9CA3AF;
+      --color-accent: #2563EB;
+      --color-accent-hover: #1D4ED8;
+      --color-accent-subtle: rgba(37, 99, 235, 0.08);
+      --color-accent-text: #1E40AF;
+      --color-success: #16A34A;
+      --color-warning: #D97706;
+      --color-danger: #DC2626;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+    /* ============================================
+       RESET & BASE
+       ============================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: var(--font-base);
+      line-height: 1.618; /* Golden Ratio line-height */
+      color: var(--color-text-primary);
+      background: var(--color-bg);
+      transition: background var(--transition), color var(--transition);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ============================================
+       LAYOUT — Golden Ratio Proportions
+       ============================================ */
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER — 10% accent zone */
+    .header {
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      padding: var(--space-sm) var(--space-lg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .header-brand svg {
+      width: 28px;
+      height: 28px;
+      color: var(--color-accent);
+    }
+
+    .header-brand h1 {
+      font-size: var(--font-xl);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .header-brand span {
+      color: var(--color-accent);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .header-time {
+      font-size: var(--font-sm);
+      color: var(--color-text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      width: 52px;
+      height: 28px;
+      border-radius: 14px;
+      background: var(--color-surface-elevated);
+      border: 1px solid var(--color-border);
+      cursor: pointer;
+      position: relative;
+      transition: background var(--transition);
+    }
+
+    .theme-toggle::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      top: 2px;
+      left: 2px;
+      transition: transform var(--transition);
+    }
+
+    [data-theme="light"] .theme-toggle::after {
+      transform: translateX(24px);
+    }
+
+    .theme-toggle-icons {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6px;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .theme-toggle-icons svg {
+      width: 14px;
+      height: 14px;
+      color: var(--color-text-muted);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      flex: 1;
+      padding: var(--space-lg);
+      max-width: 1440px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ============================================
+       STATUS BAR — Delivery schedule overview
+       ============================================ */
+    .status-bar {
+      display: flex;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-lg);
+      overflow-x: auto;
+      padding-bottom: var(--space-xs);
+    }
+
+    .status-chip {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: 6px var(--space-sm);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 20px;
+      font-size: var(--font-sm);
+      white-space: nowrap;
+      transition: all var(--transition);
+    }
+
+    .status-chip:hover {
+      border-color: var(--color-accent);
+      background: var(--color-accent-subtle);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-dot.live { background: var(--color-success); animation: pulse 2s infinite; }
+    .status-dot.pending { background: var(--color-warning); }
+    .status-dot.done { background: var(--color-text-muted); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .status-chip .time {
+      color: var(--color-text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ============================================
+       TABS — Category navigation
+       ============================================ */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      margin-bottom: var(--space-lg);
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      padding: 4px;
+      border: 1px solid var(--color-border-subtle);
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: var(--space-xs) var(--space-md);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-sm);
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--color-text-secondary);
+      background: transparent;
+      border: none;
+      white-space: nowrap;
+      transition: all var(--transition);
+    }
+
+    .tab:hover {
+      color: var(--color-text-primary);
+      background: var(--color-surface-hover);
+    }
+
+    .tab.active {
+      color: var(--color-accent);
+      background: var(--color-accent-subtle);
+      font-weight: 600;
+    }
+
+    .tab .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 9px;
+      background: var(--color-accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    /* ============================================
+       GRID — 61.8% / 38.2% Golden Ratio split
+       ============================================ */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 61.8% 1fr;
+      gap: var(--space-lg);
+    }
+
+    /* ============================================
+       NEWS FEED — Main column (61.8%)
+       ============================================ */
+    .feed-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    .region-group {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color var(--transition);
+    }
+
+    .region-group:hover {
+      border-color: var(--color-border);
+    }
+
+    .region-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: 1px solid var(--color-border-subtle);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .region-header:hover {
+      background: var(--color-surface-hover);
+    }
+
+    .region-title {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+
+    .region-flag {
+      font-size: var(--font-lg);
+    }
+
+    .region-name {
+      font-weight: 600;
+      font-size: var(--font-base);
+    }
+
+    .region-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: var(--font-sm);
+      color: var(--color-text-muted);
+    }
+
+    .delivery-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .delivery-badge.delivered {
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--color-success);
+    }
+
+    .delivery-badge.scheduled {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--color-warning);
+    }
+
+    .delivery-badge.live {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--color-accent);
+    }
+
+    .region-body {
+      padding: 0;
+    }
+
+    /* News Item */
+    .news-item {
+      display: flex;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: 1px solid var(--color-border-subtle);
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+
+    .news-item:last-child { border-bottom: none; }
+    .news-item:hover { background: var(--color-surface-hover); }
+
+    .news-category-indicator {
+      width: 3px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      align-self: stretch;
+    }
+
+    .news-category-indicator.supply-demand { background: #3B82F6; }
+    .news-category-indicator.tech-innovation { background: #8B5CF6; }
+    .news-category-indicator.shortage-surge { background: #EF4444; }
+    .news-category-indicator.ma { background: #F59E0B; }
+    .news-category-indicator.earnings { background: #22C55E; }
+
+    .news-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .news-headline {
+      font-weight: 600;
+      font-size: var(--font-base);
+      line-height: 1.4;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .news-summary {
+      font-size: var(--font-sm);
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+
+    .news-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    .news-source {
+      font-weight: 500;
+      color: var(--color-text-secondary);
+    }
+
+    .news-tag {
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--color-accent-subtle);
+      color: var(--color-accent-text);
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .news-tag.earnings { background: rgba(34, 197, 94, 0.1); color: var(--color-success); }
+    .news-tag.ma { background: rgba(245, 158, 11, 0.1); color: var(--color-warning); }
+    .news-tag.shortage { background: rgba(239, 68, 68, 0.1); color: var(--color-danger); }
+    .news-tag.tech { background: rgba(139, 92, 246, 0.1); color: #A78BFA; }
+
+    /* ============================================
+       SIDEBAR — 38.2% Golden Ratio
+       ============================================ */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    .sidebar-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .sidebar-card-header {
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: 1px solid var(--color-border-subtle);
+      font-weight: 600;
+      font-size: var(--font-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+
+    .sidebar-card-header svg {
+      width: 16px;
+      height: 16px;
+      color: var(--color-accent);
+    }
+
+    .sidebar-card-body {
+      padding: var(--space-sm) var(--space-md);
+    }
+
+    /* Delivery Schedule */
+    .schedule-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+
+    .schedule-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-xs) 0;
+      border-bottom: 1px solid var(--color-border-subtle);
+      font-size: var(--font-sm);
+    }
+
+    .schedule-item:last-child { border-bottom: none; }
+
+    .schedule-region {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+
+    .schedule-time {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: var(--color-accent-text);
+    }
+
+    .schedule-local {
+      font-size: 11px;
+      color: var(--color-text-muted);
+    }
+
+    /* Sources Panel */
+    .source-group {
+      margin-bottom: var(--space-sm);
+    }
+
+    .source-group:last-child { margin-bottom: 0; }
+
+    .source-group-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .source-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: var(--font-sm);
+    }
+
+    .source-name {
+      color: var(--color-text-secondary);
+    }
+
+    .source-type {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--color-surface-hover);
+      color: var(--color-text-muted);
+    }
+
+    /* Category Legend */
+    .legend-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: var(--font-sm);
+      color: var(--color-text-secondary);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .legend-count {
+      margin-left: auto;
+      font-variant-numeric: tabular-nums;
+      color: var(--color-text-muted);
+      font-size: 12px;
+    }
+
+    /* Earnings Calendar */
+    .earnings-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-xs);
+      padding: 6px 0;
+      border-bottom: 1px solid var(--color-border-subtle);
+      font-size: var(--font-sm);
+    }
+
+    .earnings-item:last-child { border-bottom: none; }
+
+    .earnings-date {
+      font-variant-numeric: tabular-nums;
+      color: var(--color-accent-text);
+      font-weight: 600;
+      white-space: nowrap;
+      min-width: 48px;
+    }
+
+    .earnings-company {
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .earnings-detail {
+      color: var(--color-text-muted);
+      font-size: 12px;
+    }
+
+    /* ============================================
+       SETTINGS MODAL
+       ============================================ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-lg);
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 640px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-md) var(--space-lg);
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .modal-header h2 {
+      font-size: var(--font-xl);
+      font-weight: 700;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: var(--color-surface-hover);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all var(--transition);
+    }
+
+    .modal-close:hover {
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+    }
+
+    .modal-body {
+      padding: var(--space-lg);
+    }
+
+    .setting-group {
+      margin-bottom: var(--space-lg);
+    }
+
+    .setting-group:last-child { margin-bottom: 0; }
+
+    .setting-group-title {
+      font-size: var(--font-sm);
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-sm);
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-xs) 0;
+      gap: var(--space-sm);
+    }
+
+    .setting-label {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: var(--font-base);
+    }
+
+    .setting-input {
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-size: var(--font-sm);
+      font-variant-numeric: tabular-nums;
+      width: 100px;
+      text-align: center;
+      transition: border-color var(--transition);
+    }
+
+    .setting-input:focus {
+      outline: none;
+      border-color: var(--color-accent);
+    }
+
+    /* ============================================
+       BUTTON
+       ============================================ */
+    .btn {
+      padding: var(--space-xs) var(--space-md);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text-primary);
+      font-size: var(--font-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: var(--color-surface-hover);
+      border-color: var(--color-border);
+    }
+
+    .btn-accent {
+      background: var(--color-accent);
+      color: #fff;
+      border-color: var(--color-accent);
+    }
+
+    .btn-accent:hover {
+      background: var(--color-accent-hover);
+      border-color: var(--color-accent-hover);
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+    }
+
+    .btn-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* ============================================
+       DEDUPLICATION INDICATOR
+       ============================================ */
+    .dedup-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-xs) var(--space-md);
+      background: var(--color-accent-subtle);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-md);
+      font-size: var(--font-sm);
+    }
+
+    .dedup-bar svg {
+      width: 16px;
+      height: 16px;
+      color: var(--color-accent);
+      flex-shrink: 0;
+    }
+
+    .dedup-bar strong {
+      color: var(--color-accent-text);
+    }
+
+    /* ============================================
+       EMPTY STATE
+       ============================================ */
+    .empty-state {
+      padding: var(--space-xl) var(--space-lg);
+      text-align: center;
+      color: var(--color-text-muted);
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: var(--space-sm);
+      opacity: 0.3;
+    }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 1024px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+      .main {
+        padding: var(--space-md);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .header {
+        padding: var(--space-xs) var(--space-sm);
+      }
+      .header-brand h1 {
+        font-size: var(--font-lg);
+      }
+      .tabs {
+        gap: 0;
+      }
+      .tab {
+        padding: var(--space-xs) var(--space-sm);
+        font-size: 13px;
+      }
+      .status-bar {
+        flex-wrap: nowrap;
+      }
+    }
+
+    /* ============================================
+       SCROLLBAR
+       ============================================ */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: var(--color-border);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--color-text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- ========== HEADER ========== -->
+    <header class="header">
+      <div class="header-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+          <polyline points="16 7 22 7 22 13"/>
+        </svg>
+        <h1>Global<span>Pulse</span></h1>
+      </div>
+      <div class="header-actions">
+        <span class="header-time" id="currentTime">2026-03-18 KST 21:00</span>
+        <button class="btn btn-icon" onclick="openSettings()" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+        </button>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+          <div class="theme-toggle-icons">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </div>
+        </button>
+      </div>
+    </header>
+
+    <!-- ========== MAIN ========== -->
+    <main class="main">
+      <!-- Delivery Status Bar -->
+      <div class="status-bar">
+        <div class="status-chip">
+          <span class="status-dot done"></span>
+          <span>Asia-Pacific</span>
+          <span class="time">Delivered 18:30 JST</span>
+        </div>
+        <div class="status-chip">
+          <span class="status-dot done"></span>
+          <span>Greater China</span>
+          <span class="time">Delivered 19:00 CST</span>
+        </div>
+        <div class="status-chip">
+          <span class="status-dot live"></span>
+          <span>Europe</span>
+          <span class="time">Collecting... 20:30 CET</span>
+        </div>
+        <div class="status-chip">
+          <span class="status-dot pending"></span>
+          <span>Americas</span>
+          <span class="time">Scheduled 21:00 EST</span>
+        </div>
+        <div class="status-chip">
+          <span class="status-dot done"></span>
+          <span>Korea</span>
+          <span class="time">Delivered 20:45 KST</span>
+        </div>
+      </div>
+
+      <!-- Category Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this, 'all')">All<span class="badge">47</span></button>
+        <button class="tab" onclick="switchTab(this, 'supply-demand')">Supply / Demand<span class="badge">12</span></button>
+        <button class="tab" onclick="switchTab(this, 'tech')">Tech Innovation<span class="badge">9</span></button>
+        <button class="tab" onclick="switchTab(this, 'shortage')">Shortage / Surge<span class="badge">6</span></button>
+        <button class="tab" onclick="switchTab(this, 'ma')">M&A / Capital Flow<span class="badge">8</span></button>
+        <button class="tab" onclick="switchTab(this, 'earnings')">Earnings<span class="badge">12</span></button>
+      </div>
+
+      <!-- Deduplication Notice -->
+      <div class="dedup-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <span>Deduplication active — <strong>13 duplicate articles</strong> removed across regions. Each story appears once under its primary source.</span>
+      </div>
+
+      <!-- Content Grid: 61.8% / 38.2% -->
+      <div class="content-grid">
+        <!-- ===== NEWS FEED (61.8%) ===== -->
+        <div class="feed-section">
+
+          <!-- US Region -->
+          <div class="region-group">
+            <div class="region-header" onclick="toggleRegion(this)">
+              <div class="region-title">
+                <span class="region-flag">US</span>
+                <span class="region-name">Americas</span>
+              </div>
+              <div class="region-meta">
+                <span class="delivery-badge scheduled">Scheduled 21:00 EST</span>
+                <span>14 articles</span>
+              </div>
+            </div>
+            <div class="region-body">
+              <div class="news-item">
+                <div class="news-category-indicator ma"></div>
+                <div class="news-content">
+                  <div class="news-headline">Broadcom Nears $85B Deal to Acquire Cloud Software Giant VMware in Largest Tech M&A of 2026</div>
+                  <div class="news-summary">The semiconductor company is in advanced talks for what would be the largest technology acquisition this year, signaling continued consolidation in enterprise software.</div>
+                  <div class="news-meta">
+                    <span class="news-source">Reuters</span>
+                    <span>3h ago</span>
+                    <span class="news-tag ma">M&A</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="news-item">
+                <div class="news-category-indicator earnings"></div>
+                <div class="news-content">
+                  <div class="news-headline">NVIDIA Q4 Earnings Crush Estimates: Revenue $38.2B vs $36.5B Expected, Data Center Growth +87% YoY</div>
+                  <div class="news-summary">AI chip demand continues to surge as hyperscalers ramp up infrastructure spending. Forward guidance raised to $42B for Q1 FY2027.</div>
+                  <div class="news-meta">
+                    <span class="news-source">CNBC</span>
+                    <span>5h ago</span>
+                    <span class="news-tag earnings">Earnings</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="news-item">
+                <div class="news-category-indicator supply-demand"></div>
+                <div class="news-content">
+                  <div class="news-headline">US Natural Gas Prices Surge 18% as Late-Season Cold Snap Drains Storage Below 5-Year Average</div>
+                  <div class="news-summary">Henry Hub futures hit $4.80/MMBtu as winter storm brings record cold to Gulf Coast producing regions, cutting output by 8 Bcf/d.</div>
+                  <div class="news-meta">
+                    <span class="news-source">Bloomberg</span>
+                    <span>6h ago</span>
+                    <span class="news-tag">Supply/Demand</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="news-item">
+                <div class="news-category-indicator tech-innovation"></div>
+                <div class="news-content">
+                  <div class="news-headline">Google DeepMind Unveils Gemini Ultra 2.0 with Real-Time Multimodal Reasoning Capabilities</div>
+                  <div class="news-summary">New model demonstrates breakthrough in agentic AI tasks, capable of executing complex multi-step workflows across applications.</div>
+                  <div class="news-meta">
+                    <span class="news-source">The Verge</span>
+                    <span>7h ago</span>
+                    <span class="news-tag tech">Tech</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Europe Region -->
+          <div class="region-group">
+            <div class="region-header" onclick="toggleRegion(this)">
+              <div class="region-title">
+                <span class="region-flag">EU</span>
+                <span class="region-name">Europe</span>
+              </div>
+              <div class="region-meta">
+                <span class="delivery-badge live">Collecting...</span>
+                <span>11 articles</span>
+              </div>
+            </div>
+            <div class="region-body">
+              <div class="news-item">
+                <div class="news-category-indicator earnings"></div>
+                <div class="news-content">
+                  <div class="news-headline">ASML Reports Record Backlog of EUR 56B as Advanced EUV Demand Exceeds Production Capacity</div>
+                  <div class="news-summary">Dutch chipmaker raises 2027 revenue guidance to EUR 44-48B on surging demand for High-NA EUV lithography systems from TSMC and Samsung.</div>
+                  <div class="news-meta">
+                    <span class="news-source">Financial Times</span>
+                    <span>2h ago</span>
+                    <span class="news-tag earnings">Earnings</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="news-item">
+                <div class="news-category-indicator shortage-surge"></div>
+                <div class="news-content">
+                  <div class="news-headline">European Rare Earth Supply Crisis Deepens as China Tightens Export Controls on Critical Minerals</div>
+                  <div class="news-summary">EU Commission fast-tracks emergency procurement of gallium and germanium as defense sector faces 6-month supply shortage.</div>
+                  <div class="news-meta">
+                    <span class="news-source">Reuters</span>
+                    <span>4h ago</span>
+                    <span class="news-tag shortage">Shortage</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="news-item">
+                <div class="news-category-indicator ma"></div>
+                <div class="news-content">
+                  <div class="news-headline">Siemens Energy Agrees to Acquire Majority Stake in Indian Wind Turbine Manufacturer for $3.2B</div>
+                  <div class="news-summary">Deal expands Siemens' renewable energy footprint in Asia's fastest-growing wind market amid global energy transition push.</div>
+                  <div class="news-meta">
+                    <span class="news-source">Handelsblatt</span>
+                    <span>5h ago</span>
+                    <span class="news-tag ma">M&A</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Japan Region -->
+          <div class="region-group">
+            <div class="region-header" onclick="toggleRegion(this)">
+              <div class="region-title">
+                <span class="region-flag">JP</span>
+                <span class="region-name">Japan</span>
+              </div>
+              <div class="region-meta">
+                <span class="delivery-badge delivered">Delivered 18:30 JST</span>
+                <span>8 articles</span>
+              </div>
+            </div>
+            <div class="region-body">
+              <div class="news-item">
+                <div class="news-category-indicator earnings"></div>
+                <div class="news-content">
+                  <div class="news-headline">Toyota Motor Reports FY2026 Q3: Operating Profit +22% to JPY 1.48T on Strong Hybrid Vehicle Sales</div>
+                  <div class="news-summary">Hybrid models now account for 42% of global sales. Company raises full-year profit forecast citing favorable currency impact and cost reductions.</div>
+                  <div class="news-meta">
+                    <span class="news-source">Nikkei Asia</span>
+                    <span>8h ago</span>
+                    <span class="news-tag earnings">Earnings</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="news-item">
+                <div class="news-category-indicator tech-innovation"></div>
+                <div class="news-content">
+                  <div class="news-headline">Rapidus Achieves First Successful 2nm Test Production at Hokkaido Fab, Targets Mass Production 2027</div>
+                  <div class="news-summary">Japan's national semiconductor champion reaches critical milestone with IBM-licensed Gate-All-Around technology at Chitose facility.</div>
+                  <div class="news-meta">
+                    <span class="news-source">TDnet / Nikkei</span>
+                    <span>9h ago</span>
+                    <span class="news-tag tech">Tech</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- China & Taiwan Region -->
+          <div class="region-group">
+            <div class="region-header" onclick="toggleRegion(this)">
+              <div class="region-title">
+                <span class="region-flag">CN/TW</span>
+                <span class="region-name">Greater China</span>
+              </div>
+              <div class="region-meta">
+                <span class="delivery-badge delivered">Delivered 19:00 CST</span>
+                <span>10 articles</span>
+              </div>
+            </div>
+            <div class="region-body">
+              <div class="news-item">
+                <div class="news-category-indicator earnings"></div>
+                <div class="news-content">
+                  <div class="news-headline">TSMC February Revenue NT$286.1B (+35.7% YoY), Advanced Nodes Drive Record Monthly Sales</div>
+                  <div class="news-summary">3nm and 5nm processes now represent 62% of total wafer revenue. CoWoS advanced packaging capacity expanded by 40% to meet AI chip demand.</div>
+                  <div class="news-meta">
+                    <span class="news-source">TWSE MOPS</span>
+                    <span>10h ago</span>
+                    <span class="news-tag earnings">Earnings</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="news-item">
+                <div class="news-category-indicator supply-demand"></div>
+                <div class="news-content">
+                  <div class="news-headline">China's BYD Surpasses Tesla in Global EV Deliveries for Third Consecutive Month</div>
+                  <div class="news-summary">February deliveries reach 412,000 units globally as overseas expansion accelerates across Southeast Asia, Europe, and Latin America.</div>
+                  <div class="news-meta">
+                    <span class="news-source">South China Morning Post</span>
+                    <span>11h ago</span>
+                    <span class="news-tag">Supply/Demand</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="news-item">
+                <div class="news-category-indicator shortage-surge"></div>
+                <div class="news-content">
+                  <div class="news-headline">HBM Memory Shortage Intensifies: SK Hynix and Samsung Fully Booked Through 2027 as AI Demand Soars</div>
+                  <div class="news-summary">High Bandwidth Memory allocation tightens further as NVIDIA, AMD, and emerging AI chip startups compete for limited production capacity.</div>
+                  <div class="news-meta">
+                    <span class="news-source">DigiTimes Asia</span>
+                    <span>12h ago</span>
+                    <span class="news-tag shortage">Shortage</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ===== SIDEBAR (38.2%) ===== -->
+        <div class="sidebar">
+
+          <!-- Delivery Schedule -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              Delivery Schedule (KST)
+            </div>
+            <div class="sidebar-card-body">
+              <ul class="schedule-list">
+                <li class="schedule-item">
+                  <span class="schedule-region">JP Japan</span>
+                  <div>
+                    <span class="schedule-time">18:30 KST</span>
+                    <span class="schedule-local">= 18:30 JST</span>
+                  </div>
+                </li>
+                <li class="schedule-item">
+                  <span class="schedule-region">CN/TW Greater China</span>
+                  <div>
+                    <span class="schedule-time">20:00 KST</span>
+                    <span class="schedule-local">= 19:00 CST</span>
+                  </div>
+                </li>
+                <li class="schedule-item">
+                  <span class="schedule-region">KR Korea</span>
+                  <div>
+                    <span class="schedule-time">20:45 KST</span>
+                    <span class="schedule-local">= 20:45 KST</span>
+                  </div>
+                </li>
+                <li class="schedule-item">
+                  <span class="schedule-region">EU Europe</span>
+                  <div>
+                    <span class="schedule-time">04:30 KST+1</span>
+                    <span class="schedule-local">= 20:30 CET</span>
+                  </div>
+                </li>
+                <li class="schedule-item">
+                  <span class="schedule-region">US Americas</span>
+                  <div>
+                    <span class="schedule-time">11:00 KST+1</span>
+                    <span class="schedule-local">= 21:00 EST</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Category Legend -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+              </svg>
+              Categories
+            </div>
+            <div class="sidebar-card-body">
+              <ul class="legend-list">
+                <li class="legend-item">
+                  <span class="legend-dot" style="background:#3B82F6"></span>
+                  Supply / Demand Changes
+                  <span class="legend-count">12</span>
+                </li>
+                <li class="legend-item">
+                  <span class="legend-dot" style="background:#8B5CF6"></span>
+                  Tech Innovation
+                  <span class="legend-count">9</span>
+                </li>
+                <li class="legend-item">
+                  <span class="legend-dot" style="background:#EF4444"></span>
+                  Product Shortage / Demand Surge
+                  <span class="legend-count">6</span>
+                </li>
+                <li class="legend-item">
+                  <span class="legend-dot" style="background:#F59E0B"></span>
+                  M&A / Capital Flow
+                  <span class="legend-count">8</span>
+                </li>
+                <li class="legend-item">
+                  <span class="legend-dot" style="background:#22C55E"></span>
+                  Earnings Reports
+                  <span class="legend-count">12</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Earnings Calendar -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              Upcoming Earnings
+            </div>
+            <div class="sidebar-card-body">
+              <div class="earnings-item">
+                <span class="earnings-date">03/19</span>
+                <div>
+                  <div class="earnings-company">Micron (MU)</div>
+                  <div class="earnings-detail">Q2 FY2026 | After-market | US</div>
+                </div>
+              </div>
+              <div class="earnings-item">
+                <span class="earnings-date">03/20</span>
+                <div>
+                  <div class="earnings-company">Accenture (ACN)</div>
+                  <div class="earnings-detail">Q2 FY2026 | Pre-market | US</div>
+                </div>
+              </div>
+              <div class="earnings-item">
+                <span class="earnings-date">03/21</span>
+                <div>
+                  <div class="earnings-company">Tencent (0700.HK)</div>
+                  <div class="earnings-detail">FY2025 Annual | CN</div>
+                </div>
+              </div>
+              <div class="earnings-item">
+                <span class="earnings-date">03/24</span>
+                <div>
+                  <div class="earnings-company">Infineon (IFX.DE)</div>
+                  <div class="earnings-detail">Q1 FY2026 | EU</div>
+                </div>
+              </div>
+              <div class="earnings-item">
+                <span class="earnings-date">03/26</span>
+                <div>
+                  <div class="earnings-company">MediaTek (2454.TW)</div>
+                  <div class="earnings-detail">Q4 FY2025 | TW</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- News Sources -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+              </svg>
+              Sources
+            </div>
+            <div class="sidebar-card-body">
+              <div class="source-group">
+                <div class="source-group-title">Americas</div>
+                <div class="source-item"><span class="source-name">Bloomberg</span><span class="source-type">Wire</span></div>
+                <div class="source-item"><span class="source-name">Reuters</span><span class="source-type">Wire</span></div>
+                <div class="source-item"><span class="source-name">CNBC</span><span class="source-type">Broadcast</span></div>
+                <div class="source-item"><span class="source-name">WSJ</span><span class="source-type">Press</span></div>
+                <div class="source-item"><span class="source-name">Yahoo Finance</span><span class="source-type">Aggregator</span></div>
+                <div class="source-item"><span class="source-name">SEC EDGAR</span><span class="source-type">Filings</span></div>
+              </div>
+              <div class="source-group">
+                <div class="source-group-title">Europe</div>
+                <div class="source-item"><span class="source-name">Financial Times</span><span class="source-type">Press</span></div>
+                <div class="source-item"><span class="source-name">Handelsblatt</span><span class="source-type">Press</span></div>
+                <div class="source-item"><span class="source-name">Les Echos</span><span class="source-type">Press</span></div>
+                <div class="source-item"><span class="source-name">Investing.com</span><span class="source-type">Aggregator</span></div>
+              </div>
+              <div class="source-group">
+                <div class="source-group-title">Japan</div>
+                <div class="source-item"><span class="source-name">Nikkei Asia</span><span class="source-type">Press</span></div>
+                <div class="source-item"><span class="source-name">TDnet (JPX)</span><span class="source-type">Filings</span></div>
+                <div class="source-item"><span class="source-name">EDINET (FSA)</span><span class="source-type">Filings</span></div>
+              </div>
+              <div class="source-group">
+                <div class="source-group-title">China / Taiwan</div>
+                <div class="source-item"><span class="source-name">SCMP</span><span class="source-type">Press</span></div>
+                <div class="source-item"><span class="source-name">Caixin Global</span><span class="source-type">Press</span></div>
+                <div class="source-item"><span class="source-name">DigiTimes Asia</span><span class="source-type">Industry</span></div>
+                <div class="source-item"><span class="source-name">TWSE MOPS</span><span class="source-type">Filings</span></div>
+                <div class="source-item"><span class="source-name">TPEx</span><span class="source-type">Filings</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ========== SETTINGS MODAL ========== -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Delivery Settings</h2>
+        <button class="modal-close" onclick="closeSettings()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <div class="setting-group-title">News Delivery Time (Local Time)</div>
+          <p style="font-size:var(--font-sm);color:var(--color-text-muted);margin-bottom:var(--space-sm);">
+            Set the time when each region's daily digest is delivered. Recommended: evening hours when news publishing frequency drops.
+          </p>
+          <div class="setting-row">
+            <span class="setting-label">KR Korea (KST)</span>
+            <input type="time" class="setting-input" value="20:45" style="width:120px;">
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">JP Japan (JST, UTC+9)</span>
+            <input type="time" class="setting-input" value="18:30" style="width:120px;">
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">CN/TW Greater China (CST, UTC+8)</span>
+            <input type="time" class="setting-input" value="19:00" style="width:120px;">
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">EU Europe (CET, UTC+1)</span>
+            <input type="time" class="setting-input" value="20:30" style="width:120px;">
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">US Americas (EST, UTC-5)</span>
+            <input type="time" class="setting-input" value="21:00" style="width:120px;">
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <div class="setting-group-title">Content Deduplication</div>
+          <div class="setting-row">
+            <span class="setting-label">Remove duplicate articles across regions</span>
+            <button class="btn btn-accent" style="min-width:60px;">ON</button>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Priority source for duplicates</span>
+            <select class="setting-input" style="width:160px;">
+              <option>Original Source</option>
+              <option>Reuters / Bloomberg</option>
+              <option>Regional Source</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <div class="setting-group-title">Categories</div>
+          <div class="setting-row">
+            <span class="setting-label">Supply / Demand Changes</span>
+            <button class="btn btn-accent" style="min-width:60px;">ON</button>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Tech Innovation</span>
+            <button class="btn btn-accent" style="min-width:60px;">ON</button>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Product Shortage / Demand Surge</span>
+            <button class="btn btn-accent" style="min-width:60px;">ON</button>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">M&A / Capital Flow</span>
+            <button class="btn btn-accent" style="min-width:60px;">ON</button>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Earnings Reports</span>
+            <button class="btn btn-accent" style="min-width:60px;">ON</button>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:var(--space-sm);margin-top:var(--space-lg);">
+          <button class="btn" onclick="closeSettings()">Cancel</button>
+          <button class="btn btn-accent" onclick="closeSettings()">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Theme Toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+      localStorage.setItem('theme', html.getAttribute('data-theme'));
+    }
+
+    // Restore saved theme
+    (function() {
+      const saved = localStorage.getItem('theme');
+      if (saved) document.documentElement.setAttribute('data-theme', saved);
+    })();
+
+    // Tab Switching
+    function switchTab(el, category) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+
+      const allItems = document.querySelectorAll('.news-item');
+      allItems.forEach(item => {
+        if (category === 'all') {
+          item.style.display = 'flex';
+          return;
+        }
+        const indicator = item.querySelector('.news-category-indicator');
+        if (indicator && indicator.classList.contains(category)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    // Region Toggle (collapse/expand)
+    function toggleRegion(header) {
+      const body = header.nextElementSibling;
+      if (body.style.display === 'none') {
+        body.style.display = 'block';
+      } else {
+        body.style.display = 'none';
+      }
+    }
+
+    // Settings Modal
+    function openSettings() {
+      document.getElementById('settingsModal').classList.add('open');
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsModal').classList.remove('open');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('settingsModal').addEventListener('click', function(e) {
+      if (e.target === this) closeSettings();
+    });
+
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      const kst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+      const y = kst.getFullYear();
+      const m = String(kst.getMonth() + 1).padStart(2, '0');
+      const d = String(kst.getDate()).padStart(2, '0');
+      const h = String(kst.getHours()).padStart(2, '0');
+      const min = String(kst.getMinutes()).padStart(2, '0');
+      document.getElementById('currentTime').textContent = `${y}-${m}-${d} KST ${h}:${min}`;
+    }
+    updateClock();
+    setInterval(updateClock, 30000);
+  </script>
+</body>
+</html>
